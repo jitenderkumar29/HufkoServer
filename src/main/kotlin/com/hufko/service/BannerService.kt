@@ -3,11 +3,13 @@ package com.hufko.service
 import com.hufko.dto.*
 import com.hufko.enums.BannerType
 import com.hufko.enums.ImageStatus
-import com.hufko.model.*
+import com.hufko.model.Banner
+import com.hufko.model.ImageMetadata
 import com.hufko.repository.BannerRepository
 import com.hufko.repository.CategoryRepository
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
@@ -22,14 +24,11 @@ class BannerService(
     private val categoryRepository: CategoryRepository
 ) {
 
+    // ================= CREATE =================
+
     @CacheEvict(value = ["banners"], allEntries = true)
     fun createBanner(file: MultipartFile, bannerData: BannerCreateDTO): BannerDTO {
-        // Get category hierarchy
-        val superCategory = getSuperCategory(bannerData.superCategoryId)
-        val category = getCategory(bannerData.categoryId)
-        val subCategory = bannerData.subCategoryId?.let { getSubCategory(it) }
 
-        // Upload image and generate URLs
         val imageUrls = storageService.storeBannerImage(file, bannerData.categoryId)
         val metadata = storageService.extractImageMetadata(file)
 
@@ -38,188 +37,126 @@ class BannerService(
             title = bannerData.title,
             description = bannerData.description,
             shortDescription = bannerData.shortDescription,
-            superCategory = superCategory,
-            category = category,
-            subCategory = subCategory,
+
+            // IMPORTANT: STRING IDS (FIXED MODEL STYLE)
+            superCategory = bannerData.superCategoryId,
+            category = bannerData.categoryId,
+            subCategory = bannerData.subCategoryId,
+
             imageUrl = imageUrls.originalUrl,
             thumbnailUrl = imageUrls.thumbnailUrl,
             mobileImageUrl = imageUrls.mobileUrl,
             tabletImageUrl = imageUrls.tabletUrl,
+
             imageMetadata = metadata,
             resourceName = bannerData.resourceName,
             resourcePath = imageUrls.originalUrl,
+
             bannerType = bannerData.bannerType,
             priority = bannerData.priority,
             isActive = true,
             status = ImageStatus.ACTIVE,
+
             clickUrl = bannerData.clickUrl,
             deepLink = bannerData.deepLink,
+
             startDate = bannerData.startDate,
             endDate = bannerData.endDate,
-            tags = bannerData.tags ?: emptyList(),
+
+            tags = bannerData.tags,
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now()
         )
 
-        val savedBanner = bannerRepository.save(banner)
-        return convertToDTO(savedBanner)
+        return convertToDTO(bannerRepository.save(banner))
     }
 
-    @Cacheable(value = ["banners"], key = "#bannerId")
-    fun getBannerById(bannerId: String): BannerDTO {
-        val banner = bannerRepository.findByBannerId(bannerId)
-            ?: throw RuntimeException("Banner not found with id: $bannerId")
-        return convertToDTO(banner)
-    }
+    // ================= READ =================
 
-    @CacheEvict(value = ["banners", "home_banners"], allEntries = true)
-    fun updateBanner(bannerId: String, updateRequest: BannerUpdateDTO): BannerDTO {
-        val existingBanner = bannerRepository.findByBannerId(bannerId)
-            ?: throw RuntimeException("Banner not found with id: $bannerId")
+    fun getAllBanners(): List<BannerDTO> =
+        bannerRepository.findAll().map { convertToDTO(it) }
 
-        val updatedBanner = existingBanner.copy(
-            title = updateRequest.title ?: existingBanner.title,
-            description = updateRequest.description ?: existingBanner.description,
-            shortDescription = updateRequest.shortDescription ?: existingBanner.shortDescription,
-            bannerType = updateRequest.bannerType ?: existingBanner.bannerType,
-            priority = updateRequest.priority ?: existingBanner.priority,
-            isActive = updateRequest.isActive ?: existingBanner.isActive,
-            clickUrl = updateRequest.clickUrl ?: existingBanner.clickUrl,
-            deepLink = updateRequest.deepLink ?: existingBanner.deepLink,
-            startDate = updateRequest.startDate ?: existingBanner.startDate,
-            endDate = updateRequest.endDate ?: existingBanner.endDate,
-            updatedAt = LocalDateTime.now()
+    fun getActiveBanners(): List<BannerDTO> =
+        bannerRepository.findByIsActiveTrue().map { convertToDTO(it) }
+
+    @Cacheable("home_banners")
+    fun getHomePageBanners(): List<BannerDTO> =
+        bannerRepository
+            .findByIsActiveTrueAndBannerTypeOrderByPriorityDesc(BannerType.HOME_PAGE)
+            .map { convertToDTO(it) }
+
+    fun getBannerById(bannerId: String): BannerDTO =
+        convertToDTO(
+            bannerRepository.findByBannerId(bannerId)
+                ?: throw RuntimeException("Banner not found: $bannerId")
         )
 
-        val savedBanner = bannerRepository.save(updatedBanner)
-        return convertToDTO(savedBanner)
+    fun getBannersByType(bannerType: String): List<BannerDTO> {
+        val type = BannerType.valueOf(bannerType.uppercase())
+        return bannerRepository.findByBannerType(type).map { convertToDTO(it) }
     }
 
-    @CacheEvict(value = ["banners", "home_banners"], allEntries = true)
-    fun deleteBanner(bannerId: String) {
-        val banner = bannerRepository.findByBannerId(bannerId)
-            ?: throw RuntimeException("Banner not found with id: $bannerId")
-
-        storageService.deleteBannerImages(banner.imageUrl, banner.thumbnailUrl)
-        bannerRepository.delete(banner)
-    }
-
-    @Cacheable(value = ["home_banners"])
-    fun getHomePageBanners(): List<BannerDTO> {
-        val banners = bannerRepository.findByIsActiveTrueAndBannerTypeOrderByPriorityDesc(BannerType.HOME_PAGE)
-        return banners.map { convertToDTO(it) }
-    }
+    // ================= HIERARCHY (FIXED - NO *Id METHODS*) =================
 
     fun getBannersBySuperCategory(superCategoryId: String, page: Int, size: Int): PageResponse<BannerDTO> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "priority"))
-        val bannerPage = bannerRepository.findBySuperCategoryId(superCategoryId, pageable)
+        val pageData = bannerRepository.findBySuperCategory(superCategoryId, pageable)
 
-        return PageResponse(
-            content = bannerPage.content.map { convertToDTO(it) },
-            page = bannerPage.number,
-            size = bannerPage.size,
-            totalElements = bannerPage.totalElements,
-            totalPages = bannerPage.totalPages
-        )
+        return toPageResponse(pageData)
     }
-
 
     fun getBannersByCategory(categoryId: String, page: Int, size: Int): PageResponse<BannerDTO> {
         val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "priority"))
-        val bannerPage = bannerRepository.findByCategoryId(categoryId, pageable)
+        val pageData = bannerRepository.findByCategory(categoryId, pageable)
 
-        return PageResponse(
-            content = bannerPage.content.map { convertToDTO(it) },
-            page = bannerPage.number,
-            size = bannerPage.size,
-            totalElements = bannerPage.totalElements,
-            totalPages = bannerPage.totalPages
-        )
+        return toPageResponse(pageData)
     }
+
+    fun getBannersBySubCategory(subCategoryId: String, page: Int, size: Int): PageResponse<BannerDTO> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "priority"))
+        val pageData = bannerRepository.findBySubCategory(subCategoryId, pageable)
+
+        return toPageResponse(pageData)
+    }
+
+    fun getBannersBySuperCategoryAndCategory(
+        superCategoryId: String,
+        categoryId: String,
+        page: Int,
+        size: Int
+    ): PageResponse<BannerDTO> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "priority"))
+        val pageData = bannerRepository.findBySuperCategoryAndCategory(
+            superCategoryId, categoryId, pageable
+        )
+
+        return toPageResponse(pageData)
+    }
+
+    fun getBannersBySuperCategoryAndCategoryAndSubCategory(
+        superCategoryId: String,
+        categoryId: String,
+        subCategoryId: String,
+        page: Int,
+        size: Int
+    ): PageResponse<BannerDTO> {
+        val pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "priority"))
+        val pageData = bannerRepository.findBySuperCategoryAndCategoryAndSubCategory(
+            superCategoryId, categoryId, subCategoryId, pageable
+        )
+
+        return toPageResponse(pageData)
+    }
+
+    // ================= SEARCH =================
 
     fun searchBanners(query: String, page: Int, size: Int): PageResponse<BannerDTO> {
         val pageable = PageRequest.of(page, size)
-        val bannerPage = bannerRepository.searchBanners(query, pageable)
-
-        return PageResponse(
-            content = bannerPage.content.map { convertToDTO(it) },
-            page = bannerPage.number,
-            size = bannerPage.size,
-            totalElements = bannerPage.totalElements,
-            totalPages = bannerPage.totalPages
-        )
+        val pageData = bannerRepository.searchBanners(query, pageable)
+        return toPageResponse(pageData)
     }
 
-    fun exportBannersToJson(superCategoryId: String?, categoryId: String?): String {
-        val banners = when {
-            superCategoryId != null -> bannerRepository.findBySuperCategoryId(superCategoryId)
-            categoryId != null -> bannerRepository.findByCategoryId(categoryId)
-            else -> bannerRepository.findAll()
-        }
-
-        return storageService.exportToJson(banners.map { convertToDTO(it) }, "banners_${System.currentTimeMillis()}.json")
-    }
-
-    fun populateBannersFromJson(jsonFile: MultipartFile): ImportResult {
-        return storageService.importBannersFromJson(jsonFile) { bannerDTOs ->
-            bannerDTOs.forEach { dto ->
-                val banner = Banner(
-                    bannerId = generateBannerId(),
-                    title = dto.title,
-                    description = dto.description,
-                    shortDescription = dto.shortDescription,
-                    superCategory = dto.superCategory,
-                    category = dto.category,
-                    subCategory = dto.subCategory,
-                    imageUrl = dto.imageUrl,
-                    thumbnailUrl = dto.thumbnailUrl,
-                    mobileImageUrl = dto.mobileImageUrl,
-                    tabletImageUrl = dto.tabletImageUrl,
-                    imageMetadata = ImageMetadata(
-                        originalFileName = "${dto.resourceName}.jpg",
-                        fileSize = 0,
-                        mimeType = "image/jpeg",
-                        width = 0,
-                        height = 0,
-                        aspectRatio = 0.0,
-                        colors = emptyList(),
-                        dominantColor = null,
-                        altText = dto.title,
-                        title = dto.title,
-                        compressionRatio = 0.0,
-                        hash = UUID.randomUUID().toString()
-                    ),
-                    drawableResourceId = null,
-                    resourceName = dto.resourceName,
-                    resourcePath = dto.imageUrl,
-                    bannerType = dto.bannerType,
-                    priority = dto.priority,
-                    isActive = dto.isActive,
-                    status = ImageStatus.ACTIVE,
-                    targetRoles = null,
-                    targetLocations = null,
-                    targetDevices = null,
-                    startDate = null,
-                    endDate = null,
-                    clickUrl = dto.clickUrl,
-                    deepLink = dto.deepLink,
-                    actionType = null,
-                    actionData = null,
-                    clickCount = 0,
-                    viewCount = 0,
-                    ctr = 0.0,
-                    tags = dto.tags,
-                    metadata = emptyMap(),
-                    version = 0,
-                    createdAt = LocalDateTime.now(),
-                    updatedAt = LocalDateTime.now(),
-                    createdBy = null,
-                    updatedBy = null
-                )
-                bannerRepository.save(banner)
-            }
-        }
-    }
+    // ================= TRACKING =================
 
     fun recordBannerClick(bannerId: String) {
         bannerRepository.incrementClickCount(bannerId)
@@ -229,61 +166,20 @@ class BannerService(
         bannerRepository.incrementViewCount(bannerId)
     }
 
-    private fun generateBannerId(): String {
-        return "BNR_${System.currentTimeMillis()}_${UUID.randomUUID().toString().substring(0, 8)}"
-    }
+    // ================= HELPERS =================
 
-    fun getAllBanners(): List<BannerDTO> {
-        return bannerRepository.findAll().map { convertToDTO(it) }
-    }
-
-    fun getActiveBanners(): List<BannerDTO> {
-        return bannerRepository.findByIsActiveTrue().map { convertToDTO(it) }
-    }
-
-    fun getBannersByType(bannerType: String): List<BannerDTO> {
-        val type = BannerType.valueOf(bannerType.uppercase())
-        return bannerRepository.findByBannerType(type).map { convertToDTO(it) }
-    }
-
-    private fun getSuperCategory(id: String): SuperCategory {
-        return SuperCategory(
-            id = id,
-            name = when(id) {
-                "FOOD_SUPER" -> "Food"
-                "ELECTRONICS_SUPER" -> "Electronics"
-                else -> "General"
-            },
-            code = id,
-            description = "$id category",
-            iconUrl = null
+    private fun toPageResponse(page: Page<Banner>): PageResponse<BannerDTO> {
+        return PageResponse(
+            content = page.content.map { convertToDTO(it) },
+            page = page.number,
+            size = page.size,
+            totalElements = page.totalElements,
+            totalPages = page.totalPages
         )
     }
 
-    private fun getCategory(id: String): Category {
-        return Category(
-            id = id,
-            name = when(id) {
-                "ALL_FOOD_CAT" -> "All Food"
-                "HEALTHY_FOOD_CAT" -> "Healthy Food"
-                else -> "General"
-            },
-            code = id,
-            description = "$id items",
-            iconUrl = null,
-            displayOrder = 1
-        )
-    }
-
-    private fun getSubCategory(id: String): SubCategory {
-        return SubCategory(
-            id = id,
-            name = "Sub Category",
-            code = id,
-            description = "Sub category description",
-            parentCategoryId = "ALL_FOOD_CAT"
-        )
-    }
+    private fun generateBannerId(): String =
+        "BNR_${System.currentTimeMillis()}_${UUID.randomUUID().toString().take(8)}"
 
     private fun convertToDTO(banner: Banner): BannerDTO {
         return BannerDTO(
@@ -292,19 +188,24 @@ class BannerService(
             title = banner.title,
             description = banner.description,
             shortDescription = banner.shortDescription,
+
             superCategory = banner.superCategory,
             category = banner.category,
             subCategory = banner.subCategory,
+
             imageUrl = banner.imageUrl,
             thumbnailUrl = banner.thumbnailUrl,
             mobileImageUrl = banner.mobileImageUrl,
             tabletImageUrl = banner.tabletImageUrl,
+
             bannerType = banner.bannerType,
             priority = banner.priority,
             isActive = banner.isActive,
+
             resourceName = banner.resourceName,
             clickUrl = banner.clickUrl,
             deepLink = banner.deepLink,
+
             tags = banner.tags,
             viewCount = banner.viewCount,
             clickCount = banner.clickCount,

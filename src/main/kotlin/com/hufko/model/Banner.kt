@@ -2,6 +2,7 @@ package com.hufko.model
 
 import com.hufko.enums.BannerType
 import com.hufko.enums.ImageStatus
+import com.hufko.enums.Role
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.Id
 import org.springframework.data.annotation.LastModifiedDate
@@ -28,9 +29,9 @@ data class Banner(
     val shortDescription: String? = null,
 
     // Category hierarchy
-    val superCategory: SuperCategory,
-    val category: Category,
-    val subCategory: SubCategory? = null,
+    val superCategory: String,
+    val category: String,
+    val subCategory: String? = null,
 
     // Image data
     val imageUrl: String,
@@ -51,7 +52,7 @@ data class Banner(
     val status: ImageStatus = ImageStatus.ACTIVE,
 
     // Targeting
-    val targetRoles: List<com.hufko.enums.Role>? = null,
+    val targetRoles: List<Role>? = null,
     val targetLocations: List<String>? = null,
     val targetDevices: List<String>? = null,
 

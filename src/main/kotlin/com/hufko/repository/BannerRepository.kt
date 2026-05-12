@@ -20,26 +20,47 @@ interface BannerRepository : MongoRepository<Banner, String> {
 
     fun findByBannerType(bannerType: BannerType): List<Banner>
 
-    // Paginated queries
-    fun findBySuperCategoryId(superCategoryId: String, pageable: Pageable): Page<Banner>
+    // ========== PAGINATED CATEGORY QUERIES ==========
 
-    fun findByCategoryId(categoryId: String, pageable: Pageable): Page<Banner>
+    fun findBySuperCategory(superCategory: String, pageable: Pageable): Page<Banner>
 
-    fun findBySubCategoryId(subCategoryId: String, pageable: Pageable): Page<Banner>
+    fun findByCategory(category: String, pageable: Pageable): Page<Banner>
 
-    // Non-paginated queries
-    fun findBySuperCategoryId(superCategoryId: String): List<Banner>
+    fun findBySubCategory(subCategory: String?, pageable: Pageable): Page<Banner>
 
-    fun findByCategoryId(categoryId: String): List<Banner>
+    // ========== NON-PAGINATED ==========
 
-    // Search queries
+    fun findBySuperCategory(superCategory: String): List<Banner>
+
+    fun findByCategory(category: String): List<Banner>
+
+    fun findBySubCategory(subCategory: String?): List<Banner>
+
+    // ========== COMBINED FILTERS ==========
+
+    fun findBySuperCategoryAndCategory(
+        superCategory: String,
+        category: String,
+        pageable: Pageable
+    ): Page<Banner>
+
+    fun findBySuperCategoryAndCategoryAndSubCategory(
+        superCategory: String,
+        category: String,
+        subCategory: String?,
+        pageable: Pageable
+    ): Page<Banner>
+
+    // ========== SEARCH ==========
+
     @Query("{ 'title': { \$regex: ?0, \$options: 'i' } }")
     fun searchByTitle(titleRegex: String, pageable: Pageable): Page<Banner>
 
-    @Query("{ \$or: [ { 'title': { \$regex: ?0, \$options: 'i' } }, { 'description': { \$regex: ?0, \$options: 'i' } }, { 'tags': { \$in: [?0] } } ] }")
+    @Query("{ \$or: [ { 'title': { \$regex: ?0, \$options: 'i' } }, { 'description': { \$regex: ?0, \$options: 'i' } }, { 'tags': { \$regex: ?0, \$options: 'i' } } ] }")
     fun searchBanners(keyword: String, pageable: Pageable): Page<Banner>
 
-    // Update methods
+    // ========== TRACKING ==========
+
     @Query("{ 'bannerId': ?0 }")
     @Update("{ '\$inc': { 'clickCount': 1 } }")
     fun incrementClickCount(bannerId: String)
