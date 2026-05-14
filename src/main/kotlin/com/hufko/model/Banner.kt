@@ -73,7 +73,22 @@ data class Banner(
 
     // Metadata
     val tags: List<String> = emptyList(),
+
     val metadata: Map<String, Any> = emptyMap(),
+
+    // ========== DIET FOOD SPECIFIC FIELDS - ADD THESE ==========
+    val price: String? = null,
+    val restaurantName: String? = null,
+    val rating: String? = null,
+    val deliveryTime: String? = null,
+    val distance: String? = null,
+    val discount: String? = null,
+    val discountAmount: String? = null,
+    val address: String? = null,
+    val calories: String? = null,
+    val protein: String? = null,
+    val isHighProtein: Boolean = false,
+    // ============================================================
 
     @Version
     val version: Long = 0,
@@ -87,6 +102,7 @@ data class Banner(
     val createdBy: String? = null,
     val updatedBy: String? = null
 )
+
 
 data class SuperCategory(
     val id: String,

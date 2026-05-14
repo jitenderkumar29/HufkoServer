@@ -38,7 +38,6 @@ class BannerService(
             description = bannerData.description,
             shortDescription = bannerData.shortDescription,
 
-            // IMPORTANT: STRING IDS (FIXED MODEL STYLE)
             superCategory = bannerData.superCategoryId,
             category = bannerData.categoryId,
             subCategory = bannerData.subCategoryId,
@@ -64,6 +63,21 @@ class BannerService(
             endDate = bannerData.endDate,
 
             tags = bannerData.tags,
+
+            // ========== ADD DIET FIELDS ==========
+            price = bannerData.price,
+            restaurantName = bannerData.restaurantName,
+            rating = bannerData.rating,
+            deliveryTime = bannerData.deliveryTime,
+            distance = bannerData.distance,
+            discount = bannerData.discount,
+            discountAmount = bannerData.discountAmount,
+            address = bannerData.address,
+            calories = bannerData.calories,
+            protein = bannerData.protein,
+            isHighProtein = bannerData.isHighProtein,
+            // =====================================
+
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now()
         )
@@ -209,7 +223,24 @@ class BannerService(
             tags = banner.tags,
             viewCount = banner.viewCount,
             clickCount = banner.clickCount,
-            ctr = banner.ctr
+            ctr = banner.ctr,
+
+            // ========== ADD DIET FOOD FIELDS ==========
+            price = banner.price,
+            restaurantName = banner.restaurantName,
+            rating = banner.rating,
+            deliveryTime = banner.deliveryTime,
+            distance = banner.distance,
+            discount = banner.discount,
+            discountAmount = banner.discountAmount,
+            address = banner.address,
+            calories = banner.calories,
+            protein = banner.protein,
+            isHighProtein = banner.isHighProtein,
+            // ==========================================
+
+            createdAt = banner.createdAt,
+            updatedAt = banner.updatedAt
         )
     }
 }

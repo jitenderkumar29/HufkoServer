@@ -13,13 +13,14 @@ enum class Role {
 enum class BannerType {
     HOME_PAGE,
     CATEGORY_PAGE,
-    PROMOTIONAL,
-    SEASONAL,
-    FLASH_SALE,
-    SPECIAL_OFFER,
-    POPULAR,
     TRENDING,
-    RECOMMENDED
+    FLASH_SALE,
+    POPULAR,
+    RECOMMENDED,
+    PROMOTIONAL,
+    SPECIAL_OFFER,
+    SEASONAL,
+    DIET_FOOD
 }
 
 enum class FolderType {

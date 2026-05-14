@@ -102,7 +102,7 @@ class BannerDataLoader(
                     viewCount = 0,
                     ctr = 0.0,
 
-                    tags = data.tags,
+                    tags = data.tags ?: emptyList(),
                     metadata = mapOf(
                         "source" to "json_loader"
                     ),

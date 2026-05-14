@@ -9,22 +9,24 @@ import com.hufko.model.Banner
 import com.hufko.model.ImageMetadata
 import com.hufko.repository.BannerRepository
 import org.springframework.boot.CommandLineRunner
+import org.springframework.core.annotation.Order
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 import java.util.*
 
 @Component
+@Order(1)
 class DataInitializer(
     private val bannerRepository: BannerRepository
 ) : CommandLineRunner {
 
     override fun run(vararg args: String) {
         if (bannerRepository.count() == 0L) {
-            println("📦 Initializing database with banner data...")
+            println("📦 Initializing database with banner data...:::::::::::")
             loadBannersFromJsonFile()
         } else {
-            println("✅ Database already contains ${bannerRepository.count()} banners")
+            println("✅ Database already contains :::::::::::${bannerRepository.count()} banners")
         }
     }
 
@@ -47,38 +49,39 @@ class DataInitializer(
             bannerRepository.saveAll(banners)
             println("✅ Successfully loaded ${banners.size} banners from JSON file into database")
 
-            // Print summary
+            // Print summary with diet fields
             println("\n📊 Banner Summary:")
             banners.forEach { banner ->
-                println("   ${banner.priority}. ${banner.title} (${banner.bannerType}) - ${banner.category}")
+                println("   ${banner.priority}. ${banner.title}")
+                println("      Type: ${banner.bannerType}")
+                println("      Category: ${banner.category}")
+                println("      Price: ${banner.price ?: "N/A"}")
+                println("      Restaurant: ${banner.restaurantName ?: "N/A"}")
+                println("      Calories: ${banner.calories ?: "N/A"}")
+                println("      Protein: ${banner.protein ?: "N/A"}")
             }
 
         } catch (e: Exception) {
-            println("❌ Error loading banner data from JSON: ${e.message}")
+            println("❌ Error loading banner data from JSON:::::::::::: ${e.message}")
             e.printStackTrace()
             println("⚠️ Falling back to creating sample banners...")
-            createSampleBanners()
+//            createSampleBanners()
         }
     }
 
     private fun createBannerFromData(data: BannerDataDTO): Banner {
         return Banner(
             bannerId = generateBannerId(),
-
             title = data.title,
             description = data.description,
             shortDescription = data.shortDescription,
-
-            // Use direct string values from JSON
             superCategory = data.superCategory,
             category = data.category,
             subCategory = data.subCategory,
-
             imageUrl = data.imageUrl,
             thumbnailUrl = data.thumbnailUrl,
             mobileImageUrl = data.mobileImageUrl ?: data.imageUrl,
             tabletImageUrl = data.tabletImageUrl ?: data.imageUrl,
-
             imageMetadata = ImageMetadata(
                 originalFileName = "${data.resourceName}.png",
                 fileSize = 1024 * 100,
@@ -93,36 +96,40 @@ class DataInitializer(
                 compressionRatio = 0.85,
                 hash = UUID.randomUUID().toString()
             ),
-
             drawableResourceId = null,
             resourceName = data.resourceName,
             resourcePath = data.imageUrl,
-
             bannerType = data.bannerType,
             priority = data.priority,
             isActive = true,
             status = ImageStatus.ACTIVE,
-
             targetRoles = null,
             targetLocations = null,
             targetDevices = null,
-
             startDate = null,
             endDate = null,
-
             clickUrl = data.clickUrl,
             deepLink = data.deepLink,
-
             actionType = null,
             actionData = null,
-
             clickCount = 0,
             viewCount = 0,
             ctr = 0.0,
-
-            tags = data.tags,
+            tags = data.tags ?: emptyList(),
             metadata = mapOf("source" to "json_file"),
-
+            // ========== CRITICAL: Map diet fields from JSON ==========
+            price = data.price,
+            restaurantName = data.restaurantName,
+            rating = data.rating,
+            deliveryTime = data.deliveryTime,
+            distance = data.distance,
+            discount = data.discount,
+            discountAmount = data.discountAmount,
+            address = data.address,
+            calories = data.calories,
+            protein = data.protein,
+            isHighProtein = data.isHighProtein,
+            // =========================================================
             version = 0,
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now(),
@@ -180,6 +187,18 @@ class DataInitializer(
                 ctr = 0.0,
                 tags = listOf("sample", "banner", "demo"),
                 metadata = mapOf("source" to "fallback"),
+                // Sample diet fields
+                price = (index * 50).toString(),
+                restaurantName = "Sample Restaurant $index",
+                rating = "4.${index}",
+                deliveryTime = "${15 + index}-${20 + index} mins",
+                distance = "${index}.${index} km",
+                discount = "${index * 5}%",
+                discountAmount = "₹${index * 10}",
+                address = "Sample Address $index",
+                calories = (200 + index * 50).toString(),
+                protein = (10 + index * 5).toString(),
+                isHighProtein = index % 2 == 0,
                 version = 0,
                 createdAt = LocalDateTime.now(),
                 updatedAt = LocalDateTime.now(),
