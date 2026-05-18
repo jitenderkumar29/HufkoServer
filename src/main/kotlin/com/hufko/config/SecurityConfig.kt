@@ -35,16 +35,57 @@ class SecurityConfig(
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
+            .cors { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(
+                        // Auth endpoints
                         "/auth/**",
+                        // Banner endpoints
                         "/api/banners/**",
+                        // Image endpoints
                         "/api/images/**",
+                        // Static assets
                         "/assets/**",
+                        // Health check
                         "/health",
-                        "/"
+                        "/",
+                        // ========== RESTAURANT PUBLIC ENDPOINTS ==========
+                        // Basic endpoints
+                        "/api/restaurants/all",
+                        "/api/restaurants/top-rated",
+                        "/api/restaurants/pure-veg",
+                        "/api/restaurants/recommended",
+                        "/api/restaurants/featured/all",
+
+                        // Category endpoints
+                        "/api/restaurants/category/**",
+                        "/api/restaurants/category/*/recommended",
+                        "/api/restaurants/category/*/featured",
+
+                        // Filter endpoints
+                        "/api/restaurants/filter",
+                        "/api/restaurants/filter/advanced",
+                        "/api/restaurants/filter/advanced/recommended",
+
+                        // Search and rating
+                        "/api/restaurants/search",
+                        "/api/restaurants/rating/**",
+                        "/api/restaurants/top-rated/min-rating/**",
+
+                        // Pagination
+                        "/api/restaurants/pagination",
+                        "/api/restaurants/featured",
+
+                        // Other filters
+                        "/api/restaurants/outlet/**",
+                        "/api/restaurants/cuisine/**",
+                        "/api/restaurants/categories/**",
+
+                        // Get by ID patterns
+                        "/api/restaurants/*",
+                        "/api/restaurants/restaurant-id/*"
                     ).permitAll()
                     .anyRequest().authenticated()
             }

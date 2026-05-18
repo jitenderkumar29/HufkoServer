@@ -6,7 +6,7 @@ import com.hufko.enums.ImageStatus
 import com.hufko.model.Banner
 import com.hufko.model.ImageMetadata
 import com.hufko.repository.BannerRepository
-import com.hufko.repository.CategoryRepository
+//import com.hufko.repository.CategoryRepository
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.data.domain.Page
@@ -21,7 +21,7 @@ import java.util.*
 class BannerService(
     private val bannerRepository: BannerRepository,
     private val storageService: StorageService,
-    private val categoryRepository: CategoryRepository
+//    private val categoryRepository: CategoryRepository
 ) {
 
     // ================= CREATE =================
