@@ -172,6 +172,7 @@ class RestaurantDataLoader(
             filtersJson = filtersMap,
             offer = offerMap,
             isActive = true,
+            isVerified = data.isVerified,
             version = 0,
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now(),

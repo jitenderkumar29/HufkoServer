@@ -99,4 +99,16 @@ interface RestaurantRepository : MongoRepository<Restaurant, String> {
 
     @Query("{ 'featured': ?0, 'isActive': true }")
     fun findByFeatured(featured: Boolean, pageable: Pageable): Page<Restaurant>
+
+    // Find verified restaurants
+    @Query("{ 'isVerified': true, 'isActive': true }")
+    fun findAllVerified(): List<Restaurant>
+
+    // Find unverified restaurants
+    @Query("{ 'isVerified': false, 'isActive': true }")
+    fun findAllUnverified(): List<Restaurant>
+
+    // Find verified restaurants by category
+    @Query("{ 'category': { \$in: [?0] }, 'isVerified': true, 'isActive': true }")
+    fun findVerifiedByCategory(category: String): List<Restaurant>
 }

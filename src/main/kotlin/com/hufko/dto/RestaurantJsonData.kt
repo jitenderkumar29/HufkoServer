@@ -29,7 +29,7 @@ data class RestaurantJsonData(
     val ratingDescription: String? = null,
     val deliveryTime: String,
     val distance: String,
-    val premium: String = "standard",
+    val premium: String = "premium",
     val acceptingOrders: Boolean = true,
     val acceptingOrdersMsg: String = "",
     val isOpen: Boolean = true,
@@ -70,7 +70,8 @@ data class RestaurantJsonData(
     // Changed from Map<String, Any>? to JsonNode? to handle both {} and String
     val filtersJson: JsonNode? = null,
     val offer: JsonNode? = null,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val isVerified: Boolean = false,
 )
 
 data class AddressJsonData(

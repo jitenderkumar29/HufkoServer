@@ -41,7 +41,7 @@ data class Restaurant(
     val ratingDescription: String? = null,
     val deliveryTime: String,
     val distance: String,
-    val premium: String = "standard",
+    val premium: String = "premium",
     val acceptingOrders: Boolean = true,
     val acceptingOrdersMsg: String = "",
     val isOpen: Boolean = true,
@@ -82,6 +82,7 @@ data class Restaurant(
     val filtersJson: Map<String, Any> = emptyMap(),
     val offer: Map<String, Any> = emptyMap(),
     val isActive: Boolean = true,
+    val isVerified: Boolean = false,
 
     @Version
     val version: Long = 0,
