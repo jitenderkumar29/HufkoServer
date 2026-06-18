@@ -55,13 +55,13 @@ class RestaurantDataLoader(
 
             // Print summary
             println("\n📊 Restaurant Summary:")
-            restaurants.forEach { restaurant ->
-                println("   • ${restaurant.title} (${restaurant.restaurantName})")
-                println("     Category: ${restaurant.category}")
-                println("     Rating: ${restaurant.rating} | Top Rated: ${restaurant.topRated}")
-                println("     Price: ${restaurant.priceAvg} | Distance: ${restaurant.distance}")
-                println("     Outlet: ${restaurant.outlet}")
-            }
+//            restaurants.forEach { restaurant ->
+//                println("   • ${restaurant.title} (${restaurant.restaurantName})")
+//                println("     Category: ${restaurant.category}")
+//                println("     Rating: ${restaurant.rating} | Top Rated: ${restaurant.topRated}")
+//                println("     Price: ${restaurant.priceAvg} | Distance: ${restaurant.distance}")
+//                println("     Outlet: ${restaurant.outlet}")
+//            }
 
         } catch (e: Exception) {
             println("❌ Error loading restaurant data: ${e.message}")

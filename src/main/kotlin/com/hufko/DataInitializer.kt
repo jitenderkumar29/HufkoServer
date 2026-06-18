@@ -26,7 +26,7 @@ class DataInitializer(
             println("📦 Initializing database with banner data...:::::::::::")
             loadBannersFromJsonFile()
         } else {
-            println("✅ Database already contains :::::::::::${bannerRepository.count()} banners")
+            println("✅ Database already contains :::::::::::${bannerRepository.count()} banners in DataInitializer file")
         }
     }
 

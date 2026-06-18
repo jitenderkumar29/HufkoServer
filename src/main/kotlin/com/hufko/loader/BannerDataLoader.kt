@@ -22,7 +22,7 @@ class BannerDataLoader(
             println("📦 Loading banners from JSON file...")
             loadBannersFromJson()
         } else {
-            println("✅ Database already contains ${bannerRepository.count()} banners")
+            println("✅ Database already contains ${bannerRepository.count()} banners in BannerDataLoader file")
         }
     }
 
